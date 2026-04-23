@@ -108,6 +108,27 @@ class AnalysisTests(unittest.TestCase):
         self.assertEqual(result["formats"][0]["unplanned_mtbt_minutes"], 240.0)
         self.assertIsNone(result["formats"][0]["planned_mtbt_minutes"])
 
+    def test_mtbt_thresholds_are_strict(self):
+        result = analyze_formats(
+            {
+                "formats": [
+                    {
+                        "name": "A",
+                        "count": 100,
+                        "runtime_minutes": 120,
+                        "full_speed": 100,
+                        "actual_speed": 70,
+                        "staffing": 1,
+                        "unplanned_touches": 1,
+                        "planned_touches": 2,
+                    }
+                ]
+            }
+        )
+        passes = result["formats"][0]["passes"]
+        self.assertFalse(passes["unplanned_mtbt"])  # 120 is not > 120
+        self.assertFalse(passes["planned_mtbt"])  # 60 is not < 60
+
 
 if __name__ == "__main__":
     unittest.main()

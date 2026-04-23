@@ -63,3 +63,4 @@ Input example:
 Notes:
 - For touches, you can provide either `*_touches` counts or `*_stops` lists.
 - Infinite MTBT values (no touches/stops in a period) are returned as `null` in JSON output.
+- MTBT thresholds are strict as requested: unplanned must be `> 120`, planned must be `< 60`.
