@@ -126,8 +126,8 @@ class AnalysisTests(unittest.TestCase):
             }
         )
         passes = result["formats"][0]["passes"]
-        self.assertFalse(passes["unplanned_mtbt"])  # 120 is not > 120
-        self.assertFalse(passes["planned_mtbt"])  # 60 is not < 60
+        self.assertFalse(passes["unplanned_mtbt"])  # calculated 120 is not > target 120
+        self.assertFalse(passes["planned_mtbt"])  # calculated 60 is not < target 60
 
 
 if __name__ == "__main__":
