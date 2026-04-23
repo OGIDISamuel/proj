@@ -18,7 +18,7 @@ It also:
 ## Usage
 
 ```bash
-python /home/runner/work/proj/proj/analysis.py --input /path/to/input.json
+python analysis.py --input /path/to/input.json
 ```
 
 Input example:

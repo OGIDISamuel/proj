@@ -140,7 +140,7 @@ def analyze_formats(payload: dict[str, Any]) -> dict[str, Any]:
         if reference_count is not None:
             item["count_delta_vs_reference_pct"] = round(
                 ((m.count - reference_count) / reference_count) * 100, 2
-            ) if reference_count else 0.0
+            ) if reference_count != 0 else 0.0
         metrics_payload.append(item)
 
     candidates = [m for m in metrics if m.passes_all]
