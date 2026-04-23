@@ -51,6 +51,21 @@ def _require_non_negative(row: dict[str, Any], key: str) -> float:
     return value
 
 
+def _touches_from_row(row: dict[str, Any], count_key: str, stops_key: str) -> float:
+    if count_key in row:
+        return _require_non_negative(row, count_key)
+    stops = row.get(stops_key, [])
+    if stops is None:
+        return 0.0
+    if not isinstance(stops, list):
+        raise ValueError(f"{stops_key} must be a list for format '{row.get('name', '<unknown>')}'")
+    return float(len(stops))
+
+
+def _json_number(value: float) -> float | None:
+    return None if math.isinf(value) or math.isnan(value) else value
+
+
 def calculate_format_metrics(
     row: dict[str, Any],
     baseline_staffing: float,
@@ -58,6 +73,8 @@ def calculate_format_metrics(
 ) -> FormatMetrics:
     name = str(row["name"])
     count = _require_non_negative(row, "count")
+    if count <= 0:
+        raise ValueError(f"count must be > 0 for format '{name}'")
     runtime_minutes = _require_non_negative(row, "runtime_minutes")
     if runtime_minutes <= 0:
         raise ValueError(f"runtime_minutes must be > 0 for format '{name}'")
@@ -65,8 +82,8 @@ def calculate_format_metrics(
     full_speed = _require_non_negative(row, "full_speed")
     actual_speed = _require_non_negative(row, "actual_speed")
     staffing = _require_non_negative(row, "staffing")
-    unplanned_touches = _require_non_negative(row, "unplanned_touches")
-    planned_touches = _require_non_negative(row, "planned_touches")
+    unplanned_touches = _touches_from_row(row, "unplanned_touches", "unplanned_stops")
+    planned_touches = _touches_from_row(row, "planned_touches", "planned_stops")
 
     speed_ratio = 0.0 if full_speed == 0 else actual_speed / full_speed
     staffing_ratio = 0.0 if baseline_staffing == 0 else staffing / baseline_staffing
@@ -127,8 +144,8 @@ def analyze_formats(payload: dict[str, Any]) -> dict[str, Any]:
             "runtime_minutes": m.runtime_minutes,
             "speed_ratio": round(m.speed_ratio, 4),
             "staffing_ratio": round(m.staffing_ratio, 4),
-            "unplanned_mtbt_minutes": m.unplanned_mtbt_minutes,
-            "planned_mtbt_minutes": m.planned_mtbt_minutes,
+            "unplanned_mtbt_minutes": _json_number(m.unplanned_mtbt_minutes),
+            "planned_mtbt_minutes": _json_number(m.planned_mtbt_minutes),
             "passes": {
                 "speed_ratio": m.passes_speed,
                 "staffing_ratio": m.passes_staffing,
@@ -149,6 +166,11 @@ def analyze_formats(payload: dict[str, Any]) -> dict[str, Any]:
     return {
         "targets": targets,
         "primary_metric_for_test": recommend_primary_metric(metrics),
+        "run_context": {
+            "test_setup": payload.get("test_setup", {}),
+            "prework": payload.get("prework", []),
+            "questions": payload.get("questions", []),
+        },
         "formats": metrics_payload,
         "recommended_formats": [m.name for m in candidates],
     }
@@ -165,7 +187,7 @@ def main() -> None:
         payload = json.load(f)
 
     result = analyze_formats(payload)
-    print(json.dumps(result, indent=2, allow_nan=True))
+    print(json.dumps(result, indent=2))
 
 
 if __name__ == "__main__":

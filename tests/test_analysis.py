@@ -84,6 +84,30 @@ class AnalysisTests(unittest.TestCase):
         self.assertEqual(formatted["Ref"]["count_delta_vs_reference_pct"], 0.0)
         self.assertEqual(formatted["Other"]["count_delta_vs_reference_pct"], 30.0)
 
+    def test_can_use_stop_lists_and_returns_context(self):
+        result = analyze_formats(
+            {
+                "test_setup": {"speed": "1250 - 70%"},
+                "prework": ["Unattended readiness checklist"],
+                "questions": ["Safety"],
+                "formats": [
+                    {
+                        "name": "A",
+                        "count": 100,
+                        "runtime_minutes": 240,
+                        "full_speed": 100,
+                        "actual_speed": 80,
+                        "staffing": 1,
+                        "unplanned_stops": [{"minute": 30}],
+                        "planned_stops": [],
+                    }
+                ],
+            }
+        )
+        self.assertEqual(result["run_context"]["test_setup"]["speed"], "1250 - 70%")
+        self.assertEqual(result["formats"][0]["unplanned_mtbt_minutes"], 240.0)
+        self.assertIsNone(result["formats"][0]["planned_mtbt_minutes"])
+
 
 if __name__ == "__main__":
     unittest.main()
